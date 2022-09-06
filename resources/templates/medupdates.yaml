@@ -1,0 +1,201 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  MedU API Gateway and Lambda function definitions
+
+Parameters:
+  deploymentStage:
+    Type: String
+    Description: this will be the stage name and this will be used through out the template to isolate resources in different envioronment
+  APIAuthorizer:
+    Type: String
+    Description: Connect2Clinic Main Authorizer Lambda ARN
+  MedULambdaExecRole:
+    Type: String
+    Description: Lambda Exec Role ARN
+  DbHost:
+    Type: String
+    Description: RDS Host
+  DbPort:
+    Type: String
+    Description: RDS Port
+  DbName:
+    Type: String
+    Description: Database Name
+  DbUserName:
+    Type: String
+    Description: Database Username
+  DbSecretName:
+    Type: String
+    Description: Database Secret name
+  MedUDocumentsBucketName:
+    Type: String
+    Description: S3 bucket name to store all the cover images
+
+Globals:
+  Function:
+    Handler: lambda_function.lambda_handler
+    Runtime: python3.8
+    MemorySize: 512
+    Timeout: 30
+    Layers:
+      - !Ref MedULayer
+    Environment:
+      Variables:
+        RDS_HOST: !Ref DbHost
+        RDS_PORT: !Ref DbPort
+        RDS_DBNAME: !Ref DbName
+        RDS_USER: !Ref DbUserName
+        RDS_SECRET_NAME: !Ref DbSecretName
+
+Resources:
+  MedULayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Join [ "", ["MedU_utilities_", !Ref deploymentStage]]
+      Description: Lambda layer to hold the pandas dependencies for the functions
+      ContentUri: ../../layers/medupdates_utilities/python/
+      CompatibleRuntimes:
+        - python3.8
+      LicenseInfo: MIT
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: python3.8
+  SpecialtiesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_specialties" ]]
+      CodeUri: ../../functions/api/v1/specialties/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  JournalsCreateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_journals_create" ]]
+      CodeUri: ../../functions/api/v1/journals/create/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  JournalsPublishFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_journals_publish" ]]
+      CodeUri: ../../functions/api/v1/journals/publish/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  JournalsScheduleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_journals_schedule" ]]
+      CodeUri: ../../functions/api/v1/journals/schedule/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  JournalsArchiveFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_journals_archive" ]]
+      CodeUri: ../../functions/api/v1/journals/archive/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  JournalsUpdateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_journals_update" ]]
+      CodeUri: ../../functions/api/v1/journals/update/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  DisplayJournalsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_display_journals" ]]
+      CodeUri: ../../functions/api/v1/journals/display_journals/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  ViewJournalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_view_journal" ]]
+      CodeUri: ../../functions/api/v1/journals/view_journal/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  CreateDocumentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_create_document" ]]
+      CodeUri: ../../functions/api/v1/journals/create_document/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  UpdateDocumentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_update_document" ]]
+      CodeUri: ../../functions/api/v1/journals/update_document/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+  UploadsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_uploads" ]]
+      CodeUri: ../../functions/api/v1/journals/uploads/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          DOCUMENTS_BUCKET: !Ref MedUDocumentsBucketName
+  CronScheduleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_cron_schedule" ]]
+      CodeUri: ../../functions/api/v1/journals/cron_schedule/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64
+      Events:
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+  DeleteJournalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join ["", [!Ref deploymentStage, "_delete_journal" ]]
+      CodeUri: ../../functions/api/v1/journals/delete_journal/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Role: !Ref MedULambdaExecRole
+      Architectures:
+      - x86_64       

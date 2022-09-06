@@ -1,0 +1,59 @@
+openapi: "3.0.1"
+
+info:
+  title: "API endpoints for medupdates - {{ env }}"
+  description: "API endpoints for medupdates"
+  version: "v1.0"
+
+components:
+  securitySchemes:
+    care_now_24_custom_authorizer:
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      x-amazon-apigateway-authtype: "custom"
+      x-amazon-apigateway-authorizer:
+        authorizerUri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:care_now_24_{{ mainEnv }}_custom_authorizer/invocations"
+        authorizerCredentials: "arn:aws:iam::${AWS::AccountId}:role/APIGatewayExecRole-{{ env }}"
+        authorizerResultTtlInSeconds: 0
+        identitySource: "method.request.header.Authorization"
+        type: "request"
+
+paths:
+  /api/v1/specialties:
+    $ref: "./paths/specialties.yaml"
+
+  /api/v1/journals:
+    $ref: "./paths/journals_create.yaml"
+
+  /api/v1/journals/{id}:
+    $ref: "./paths/journals_update.yaml"    
+
+  /api/v1/journals/publish:
+    $ref: "./paths/journals_publish.yaml"
+
+  /api/v1/journals/schedule:
+    $ref: "./paths/journals_schedule.yaml"
+
+  /api/v1/journals/archive:
+    $ref: "./paths/journals_archive.yaml"
+  
+  /api/v1/journals/display_journals:
+    $ref: "./paths/display_journals.yaml"  
+
+  /api/v1/journals/view_journal:
+    $ref: "./paths/view_journal.yaml"     
+
+  /api/v1/journals/documents:
+    $ref: "./paths/create_document.yaml"      
+
+  /api/v1/journals/documents/{id}:
+    $ref: "./paths/update_document.yaml"  
+
+  /api/v1/journals/documents/presigned_url:
+    $ref: "./paths/uploads.yaml"    
+
+  /api/v1/journals/delete/{id}:
+    $ref: "./paths/delete_journal.yaml"             
+
+

@@ -1,0 +1,4 @@
+description: "Options response"
+headers:
+  $ref: "../headers/access_control.yaml"
+content: {}

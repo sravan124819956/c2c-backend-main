@@ -1,0 +1,17 @@
+type: "mock"
+passthroughBehavior: "when_no_match"
+requestTemplates:
+  application/json: "{\"statusCode\": 200}"
+responses:
+  default:
+    statusCode: "200"
+    responseParameters:
+      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Application-Source'"
+      method.response.header.Access-Control-Allow-Origin: "'*'"
+  4\\d{2}:
+    statusCode: "403"
+    responseParameters:
+      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Application-Source'"
+      method.response.header.Access-Control-Allow-Origin: "'*'"

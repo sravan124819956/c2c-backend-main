@@ -1,0 +1,6 @@
+sqlalchemy
+psycopg2-binary
+validators
+transitions
+boto3==1.24.56
+pytz 

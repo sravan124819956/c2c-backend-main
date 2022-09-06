@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  MedU API Gateway and Lambda function definitions
+
+Parameters:
+  deploymentStage:
+    Type: String
+    Description: this will be the stage name and this will be used through out the template to isolate resources in different envioronment
+  APIAuthorizer:
+    Type: String
+    Description: Connect2Clinic Main Authorizer Lambda ARN
+  hostedZoneId:
+    Type: String
+    Description: Route 53 Hosted Zone ID
+  ApiCustomDomainName:
+    Type: String
+    Description: API Custom Domain Name
+  ApiCustomDomainCertificateArn:
+    Type: String
+    Description: API Custom Domain Certificate Arn
+  DbHost:
+    Type: String
+    Description: RDS Host
+  DbPort:
+    Type: String
+    Description: RDS Port
+  DbName:
+    Type: String
+    Description: Database Name
+  DbUserName:
+    Type: String
+    Description: Database Username
+  DbSecretName:
+    Type: String
+    Description: Database Secret name
+  MedUDocumentsBucketName:
+    Type: String
+    Description: S3 bucket name to store all the cover images
+
+Resources:
+  MedUConfigApplication:
+    Type: AWS::Serverless::Application  
+    Properties:
+      Location: resources/templates/config.yaml
+      Parameters:
+        deploymentStage:
+          Ref: deploymentStage
+
+  MedUApplication:
+    Type: AWS::Serverless::Application
+    DependsOn: MedUConfigApplication
+    Properties:
+      Location: resources/templates/medupdates.yaml
+      Parameters:
+        deploymentStage: !Ref deploymentStage
+        APIAuthorizer: !Ref APIAuthorizer
+        DbHost: !Ref DbHost
+        DbPort: !Ref DbPort
+        DbName: !Ref DbName
+        DbUserName: !Ref DbUserName
+        DbSecretName: !Ref DbSecretName
+        MedULambdaExecRole: !GetAtt MedUConfigApplication.Outputs.MedULambdaExecRole
+        MedUDocumentsBucketName: !Ref MedUDocumentsBucketName
+
+  MedUApiGatewayWrapper:
+    Type: AWS::Serverless::Api
+    DependsOn: 
+      - MedUApplication
+    Description: !Join [ "", ["medupdates API for ", !Ref deploymentStage]]
+    Properties:
+      TracingEnabled: True
+      Name:  !Join [ "", ["medupdates API for ", !Ref deploymentStage]]
+      StageName: !Ref deploymentStage
+      Cors: "'*'"
+
+  MockMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref MedUApiGatewayWrapper
+      ResourceId: !GetAtt 
+        - MedUApiGatewayWrapper
+        - RootResourceId
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        
+  MedUDomainName:
+    Type: 'AWS::ApiGateway::DomainName'
+    Properties:
+      DomainName: !Ref ApiCustomDomainName
+      CertificateArn: !Ref ApiCustomDomainCertificateArn
+
+  MedUApiGatewayBasepathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties: 
+      DomainName: !Ref MedUDomainName
+      RestApiId: !Ref MedUApiGatewayWrapper
+      Stage: !Ref MedUApiGatewayWrapper.Stage
+
+  ApiGatewayDnsRecordset:
+    Type: AWS::Route53::RecordSet
+    Properties: 
+      AliasTarget: 
+        HostedZoneId: !GetAtt  MedUDomainName.DistributionHostedZoneId
+        DNSName: !GetAtt  MedUDomainName.DistributionDomainName
+        EvaluateTargetHealth: False
+      Comment: This should point to the api url with the custom domain name from the Api gateway
+      HostedZoneId: !Ref hostedZoneId
+      Name: !Ref ApiCustomDomainName
+      Type: A

@@ -1,0 +1,26 @@
+#/api/v1/journals/{id}
+patch:
+  summary: Update Journals
+  parameters:
+    $ref: "../parameters/identifier.yaml"
+  responses:
+    200:
+      description: "200 response"
+      headers:
+        $ref: "../headers/access_control.yaml"
+      content: {}
+    403:
+      $ref: "../responses/unauthorized.yaml"
+  security:
+    - care_now_24_custom_authorizer: []
+  x-amazon-apigateway-integration:
+    $ref: "../x-amazon-apigateway-integrations/aws_generic.yaml"
+    uri: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:{{ env }}_journals_update/invocations"
+options:
+  responses:
+    200:
+      $ref: "../responses/options.yaml"
+    403:
+      $ref: "../responses/options.yaml"
+  x-amazon-apigateway-integration:
+    $ref: "../x-amazon-apigateway-integrations/mock_generic.yaml"

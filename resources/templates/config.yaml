@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  MedU API Gateway and Lambda function definitions
+
+Parameters:
+  deploymentStage:
+    Type: String
+    Description: this will be the stage name and this will be used through out the template to isolate resources in different envioronment
+
+Resources:
+  MedULambdaExecRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join [ "", [!Ref deploymentStage, "LambdaExecRole"]]
+      Description: This Role will be used mainly to exec lambdas
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "SystemManagerParameterStoreParameterAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                Resource: "*"
+        - PolicyName: "PermitSNSSetSMSAttributes"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "SNS:SetSMSAttributes"
+                  - "SNS:Publish"
+                  - "S3:*"
+                  - "es:ESHttpGet"
+                  - "es:ESHttpPut"
+                  - "es:ESHttpDelete"
+                  - "es:ESHttpPost"
+                  - "es:ESHttpPatch"
+                  - "es:*"
+                  - "dynamodb:Get*"
+                  - "dynamodb:Query"
+                  - "dynamodb:CreateTable"
+                  - "dynamodb:PutItem"
+                Resource: "*"
+        - PolicyName: "PermitSESSendEmail"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "ses:SendEmail"
+                  - "ses:SendRawEmail"
+                Resource: "*"
+        - PolicyName: "AWSSecretsManagerGetSecretValuePolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource: "*"
+
+  MedUAPIGatewayExecRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: execution
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: '*'
+      RoleName: !Join [ "", ["APIGatewayExecRole-", !Ref deploymentStage]]
+  
+Outputs:
+  MedULambdaExecRole:
+    Description: holds the reference of the Execution Role
+    Value: !GetAtt MedULambdaExecRole.Arn

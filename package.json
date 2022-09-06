@@ -1,0 +1,19 @@
+{
+  "name": "medupdates-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "genapi": "swagger-cli bundle -r ./resources/openapi/root.yaml --outfile ./resources/openapi/api-gateway.j2 --type yaml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git-codecommit.ap-south-1.amazonaws.com/v1/repos/medupdates-backend"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "swagger-cli": "^4.0.4"
+  }
+}
